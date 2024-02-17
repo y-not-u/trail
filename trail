@@ -1,0 +1,56 @@
+#!/bin/lua
+
+local function create_link(source, target)
+  local cmd = "ln -s " .. source .. " " .. target
+  print("\n" .. cmd)
+  os.execute(cmd)
+end
+
+local function get_file_list(path)
+  local files = {}
+  for file in io.popen("ls " .. path):lines() do
+    files[#files + 1] = file
+  end
+  return files
+end
+
+local function file_exists(name)
+   local f=io.open(name,"r")
+   if f~=nil then io.close(f) return true else return false end
+end
+
+local function is_directory(path)
+  local f = io.open(path, "r")
+  local ok, err, code = f:read(1)
+  f:close()
+  return code == 21
+end
+
+local function get_current_dir()
+  local current_dir = os.getenv("PWD")
+  return current_dir
+end
+
+local function get_home_dir()
+  local home_dir = os.getenv("HOME")
+  return home_dir
+end
+
+local files = get_file_list(".")
+
+for _, filename in pairs(files) do
+  local source = get_current_dir() .. "/" .. filename
+  local target = get_home_dir() .. "/.config/" .. filename
+  if file_exists(target) then
+    goto continue
+  end
+
+  if is_directory(source) then
+    source = source .. "/"
+    target = target
+  end
+
+  create_link(source, target)
+
+  ::continue::
+end
